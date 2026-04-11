@@ -1,29 +1,29 @@
- # Quartus build artifacts
- quartus/output_files/
- quartus/db/
- quartus/incremental_db/
- quartus/qdb/
- quartus/dni/
- 
- # Quartus reports/session artifacts in project dir
- quartus/*.rpt
- quartus/*.summary
- quartus/*.smsg
- quartus/*.done
- quartus/*.pin
- quartus/*.qws
- 
- # Programming outputs (if generated outside output_files)
- *.sof
- *.pof
- *.jic
- *.rbf
- *.svf
- *.jam
- *.jbc
- 
- # Optional simulator artifacts
- transcript
- vsim.wlf
- modelsim.ini
- work/
+# Quartus build artifacts
+quartus/output_files/
+quartus/db/
+quartus/incremental_db/
+quartus/qdb/
+quartus/dni/
+
+# Quartus reports/session artifacts in project dir
+quartus/*.rpt
+quartus/*.summary
+quartus/*.smsg
+quartus/*.done
+quartus/*.pin
+quartus/*.qws
+
+# Programming outputs (if generated outside output_files)
+*.sof
+*.pof
+*.jic
+*.rbf
+*.svf
+*.jam
+*.jbc
+
+# Optional simulator artifacts
+transcript
+vsim.wlf
+modelsim.ini
+work/
