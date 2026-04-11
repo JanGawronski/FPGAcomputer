@@ -1,0 +1,7 @@
+QUARTUS_VERSION = "25.3"
+DATE = "16:08:27  April 11, 2026"
+
+# Revisions
+
+PROJECT_REVISION = "computer"
+PROJECT_REVISION = "system_top"
