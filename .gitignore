@@ -4,6 +4,7 @@ quartus/db/
 quartus/incremental_db/
 quartus/qdb/
 quartus/dni/
+quartus/tmp-clearbox
 
 # Quartus reports/session artifacts in project dir
 quartus/*.rpt
