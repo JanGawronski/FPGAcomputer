@@ -17,6 +17,20 @@ set_global_assignment -name VHDL_FILE ../rtl/terminal/terminal.vhd
 set_global_assignment -name VHDL_FILE ../rtl/terminal/keyboard.vhd
 set_global_assignment -name VHDL_FILE ../rtl/sdcard/sdcard.vhd
 set_global_assignment -name SDC_FILE computer.sdc
+
+# Pixel-clock synchronizer chains
+set_instance_assignment -name SYNCHRONIZER_IDENTIFICATION FORCED -to "terminal|enable_meta"
+set_instance_assignment -name DONT_MERGE_REGISTER ON -to "terminal|enable_meta"
+set_instance_assignment -name PRESERVE_REGISTER ON -to "terminal|enable_meta"
+set_instance_assignment -name DONT_MERGE_REGISTER ON -to "terminal|enable_pixel"
+set_instance_assignment -name PRESERVE_REGISTER ON -to "terminal|enable_pixel"
+
+set_instance_assignment -name SYNCHRONIZER_IDENTIFICATION FORCED -to "terminal|clear_meta"
+set_instance_assignment -name DONT_MERGE_REGISTER ON -to "terminal|clear_meta"
+set_instance_assignment -name PRESERVE_REGISTER ON -to "terminal|clear_meta"
+set_instance_assignment -name DONT_MERGE_REGISTER ON -to "terminal|clear_pixel"
+set_instance_assignment -name PRESERVE_REGISTER ON -to "terminal|clear_pixel"
+
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 100
 set_global_assignment -name DEVICE A3CZ135BB18AE7S
