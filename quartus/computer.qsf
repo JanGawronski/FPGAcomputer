@@ -11,6 +11,8 @@ set_global_assignment -name VHDL_FILE ../rtl/uart/load_from_uart_to_ram.vhd
 set_global_assignment -name VHDL_FILE ../rtl/uart/send_from_ram_to_uart.vhd
 set_global_assignment -name VHDL_FILE ../rtl/hdmi/i2c.vhd
 set_global_assignment -name VHDL_FILE ../rtl/hdmi/test.vhd
+set_global_assignment -name VHDL_FILE ../rtl/terminal/text_ram.vhd
+set_global_assignment -name VHDL_FILE ../rtl/terminal/font_rom.vhd
 set_global_assignment -name VHDL_FILE ../rtl/terminal/terminal.vhd
 set_global_assignment -name VHDL_FILE ../rtl/terminal/keyboard.vhd
 set_global_assignment -name VHDL_FILE ../rtl/sdcard/sdcard.vhd
