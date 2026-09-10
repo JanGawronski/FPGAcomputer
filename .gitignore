@@ -5,6 +5,7 @@ quartus/incremental_db/
 quartus/qdb/
 quartus/dni/
 quartus/tmp-clearbox
+quartus/ip/agilex_reset_release/
 
 # Quartus reports/session artifacts in project dir
 quartus/*.rpt

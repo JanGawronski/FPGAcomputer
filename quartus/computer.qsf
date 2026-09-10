@@ -4,6 +4,7 @@ set_global_assignment -name PROJECT_CREATION_TIME_DATE "14:08:03  APRIL 11, 2026
 set_global_assignment -name LAST_QUARTUS_VERSION "25.3.1 Pro Edition"
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name TOP_LEVEL_ENTITY system_top
+set_global_assignment -name VHDL_FILE ../rtl/reset/reset_synchronizer.vhd
 set_global_assignment -name VHDL_FILE ../rtl/top/system_top.vhd
 set_global_assignment -name VHDL_FILE ../rtl/cpu/cpu.vhd
 set_global_assignment -name VHDL_FILE ../rtl/ram/on_chip_ram.vhd
@@ -427,5 +428,6 @@ set_global_assignment -name ACTIVE_SERIAL_CLOCK AS_FREQ_100MHZ
 set_global_assignment -name DEVICE_INITIALIZATION_CLOCK OSC_CLK_1_125MHZ
 set_global_assignment -name BOARD default
 set_global_assignment -name POWER_APPLY_THERMAL_MARGIN ADDITIONAL
+set_global_assignment -name IP_FILE ip/agilex_reset_release.ip
 set_global_assignment -name IP_FILE ip/pll.ip
 set_global_assignment -name QSYS_FILE computer.qsys

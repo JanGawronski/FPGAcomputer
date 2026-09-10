@@ -6,7 +6,8 @@ entity terminal is
   port(
     CLOCK        : in  std_logic;
     PIXEL_CLK    : in  std_logic;
-    RESET        : in  std_logic;
+    RESET_50     : in  std_logic;
+    RESET_PIXEL  : in  std_logic;
     ENABLE       : in  std_logic;
     FPGA_UART_RX : in  std_logic;  
     
@@ -133,7 +134,7 @@ begin
       )
     port map (
       CLOCK        => CLOCK,
-      RESET        => RESET,
+      RESET        => RESET_50,
       ENABLE       => keyboard_enable,
 
       FPGA_UART_RX => FPGA_UART_RX,
@@ -145,7 +146,7 @@ begin
   u_i2c : entity work.hdmi_i2c
     port map (
       CLOCK      => CLOCK,
-      RESET      => RESET,
+      RESET      => RESET_50,
       I2C_SCL_I  => HDMI_I2C_SCL_I,
       I2C_SDA_I  => HDMI_I2C_SDA_I,
       I2C_SCL_OE => HDMI_I2C_SCL_OE,
@@ -156,7 +157,7 @@ begin
   sdcard : entity work.sdcard
     port map (
       clk      => CLOCK,
-      rst      => RESET,
+      rst      => RESET_50,
       start_rd => sd_start_rd,
       start_wr => sd_start_wr,
       lba      => sd_lba,
@@ -192,12 +193,12 @@ begin
 
   READY <= i2c_ready and not clear_active;
 
-  HDMI_ISEL <= not RESET;
+  HDMI_ISEL <= not RESET_50;
   HDMI_PD_n <= '1';
   HDMI_TX_CLK_p <= not PIXEL_CLK;
 
   text_wr_en <= '1'
-    when RESET = '0' and ENABLE = '1' and
+    when RESET_50 = '0' and ENABLE = '1' and
       (clear_active = '1' or differential /= last_differential_50)
     else '0';
 
@@ -207,9 +208,9 @@ begin
 
   text_wr_data <= (others => '0') when clear_active = '1' else char;
 
-  process (CLOCK, RESET)
+  process (CLOCK, RESET_50)
   begin
-    if RESET = '1' then
+    if RESET_50 = '1' then
       clear_active         <= '1';
       clear_addr           <= 0;
       cursor_addr          <= 0;
@@ -294,9 +295,9 @@ begin
          v_count >= V_START and v_count < V_END
     else '0';
 
-  process (PIXEL_CLK, RESET)
+  process (PIXEL_CLK, RESET_PIXEL)
   begin
-    if RESET = '1' then
+    if RESET_PIXEL = '1' then
       enable_meta  <= '0';
       enable_pixel <= '0';
       clear_meta   <= '1';
@@ -309,9 +310,9 @@ begin
     end if;
   end process;
 
-  process (PIXEL_CLK, RESET)
+  process (PIXEL_CLK, RESET_PIXEL)
   begin
-    if RESET = '1' then
+    if RESET_PIXEL = '1' then
       h_count         <= 0;
       v_count         <= 0;
       video_hs_d1     <= '1';

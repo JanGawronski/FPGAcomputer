@@ -78,6 +78,12 @@ entity system_top is
 end entity system_top;
 
 architecture rtl of system_top is
+  component agilex_reset_release is
+    port (
+      ninit_done : out std_logic
+      );
+  end component agilex_reset_release;
+
   constant C_RAM_ADDR_WIDTH : positive := 24;
   constant C_RAM_DATA_WIDTH : positive := 32;
   constant C_RAM_WORD_COUNT : positive := 512;
@@ -105,7 +111,12 @@ architecture rtl of system_top is
 
   signal owner : t_owner := owner_terminal;
 
-  signal reset : std_logic;
+  signal config_reset_request     : std_logic := '1';
+  signal button_reset_request     : std_logic;
+  signal pll_reset_request        : std_logic;
+  signal functional_reset_request : std_logic;
+  signal reset_50                 : std_logic := '1';
+  signal reset_pixel              : std_logic := '1';
 
   -- UART -> RAM loader
   signal load_enable    : std_logic;
@@ -203,7 +214,28 @@ architecture rtl of system_top is
   signal sel_hdmi_i2c_sda_oe : std_logic := '0';  
   
 begin
-  reset <= not KEY(0);
+  u_reset_release : component agilex_reset_release
+    port map (
+      ninit_done => config_reset_request
+      );
+
+  button_reset_request     <= not KEY(0);
+  pll_reset_request        <= config_reset_request or button_reset_request;
+  functional_reset_request <= pll_reset_request or not pll_locked;
+
+  u_reset_50 : entity work.reset_synchronizer
+    port map (
+      CLOCK        => CLOCK0_50,
+      ASYNC_RESET  => functional_reset_request,
+      SYNCED_RESET => reset_50
+      );
+
+  u_reset_pixel : entity work.reset_synchronizer
+    port map (
+      CLOCK        => pll_outclk,
+      ASYNC_RESET  => functional_reset_request,
+      SYNCED_RESET => reset_pixel
+      );
 
   load_enable <= '1' when owner = owner_uart_load else '0';
   cpu_enable  <= '1' when owner = owner_cpu else '0';
@@ -258,23 +290,23 @@ begin
   load_fpga_uart_rx     <= FPGA_UART_RX when owner = owner_uart_load else '0';
 
   
-  HDMI_TX_HS <= '0' when pll_locked /= '1' else
+  HDMI_TX_HS <= '0' when reset_pixel = '1' else
                 terminal_hdmi_tx_hs when owner = owner_terminal else
                 test_hdmi_tx_hs;
 
-  HDMI_TX_VS <= '0' when pll_locked /= '1' else
+  HDMI_TX_VS <= '0' when reset_pixel = '1' else
                 terminal_hdmi_tx_vs when owner = owner_terminal else
                 test_hdmi_tx_vs;
 
-  HDMI_TX_DE <= '0' when pll_locked /= '1' else
+  HDMI_TX_DE <= '0' when reset_pixel = '1' else
                 terminal_hdmi_tx_de when owner = owner_terminal else
                 test_hdmi_tx_de;
 
-  HDMI_TX_D <= (others => '0') when pll_locked /= '1' else
+  HDMI_TX_D <= (others => '0') when reset_pixel = '1' else
                 terminal_hdmi_tx_d when owner = owner_terminal else
                 test_hdmi_tx_d;
 
-  HDMI_TX_CLK_p <= '0' when pll_locked /= '1' else
+  HDMI_TX_CLK_p <= '0' when reset_pixel = '1' else
                 terminal_hdmi_tx_clk_p when owner = owner_terminal else
                 test_hdmi_tx_clk_p;
   
@@ -287,9 +319,9 @@ begin
   HDMI_I2C_SCL <= '0' when sel_hdmi_i2c_scl_oe = '1' else 'Z';
   HDMI_I2C_SDA <= '0' when sel_hdmi_i2c_sda_oe = '1' else 'Z';
 
-  process (CLOCK0_50, reset)
+  process (CLOCK0_50, reset_50)
   begin
-    if reset = '1' then
+    if reset_50 = '1' then
       owner <= owner_terminal;
     elsif rising_edge(CLOCK0_50) then
       case owner is
@@ -330,7 +362,7 @@ begin
       )
     port map (
       CLOCK       => CLOCK0_50,
-      RESET       => reset,
+      RESET       => reset_50,
       RAM_VALID   => ram_valid_mux,
       RAM_WRITE   => ram_write_mux,
       RAM_ADDR    => ram_addr_mux,
@@ -350,7 +382,7 @@ begin
       )
     port map (
       CLOCK        => CLOCK0_50,
-      RESET        => reset,
+      RESET        => reset_50,
       ENABLE       => load_enable,
       FPGA_UART_RX => load_fpga_uart_rx,
       RAM_START    => C_TRANSFER_START_VEC,
@@ -373,7 +405,7 @@ begin
       )
     port map (
       CLOCK      => CLOCK0_50,
-      RESET      => reset,
+      RESET      => reset_50,
       ENABLE     => cpu_enable,
       RAM_READY  => cpu_ram_ready,
       RAM_RVALID => cpu_ram_rvalid,
@@ -394,7 +426,7 @@ begin
       )
     port map (
       CLOCK        => CLOCK0_50,
-      RESET        => reset,
+      RESET        => reset_50,
       ENABLE       => send_enable,
       FPGA_UART_TX => uart_tx_out,
       RAM_START    => C_TRANSFER_START_VEC,
@@ -424,7 +456,7 @@ begin
     port map (
       refclk   => CLOCK0_50,
       locked   => pll_locked,
-      rst      => reset,
+      rst      => pll_reset_request,
       outclk_0 => pll_outclk
       );
 
@@ -433,7 +465,8 @@ begin
   port map (
     CLOCK         => CLOCK0_50,
     PIXEL_CLK     => pll_outclk,
-    RESET         => reset,
+    RESET_50      => reset_50,
+    RESET_PIXEL   => reset_pixel,
     ENABLE        => terminal_enable,         
     FPGA_UART_RX  => terminal_fpga_uart_rx,
     HDMI_I2C_SCL_I  => HDMI_I2C_SCL,
@@ -465,7 +498,8 @@ begin
   port map (
     CLOCK         => CLOCK0_50,
     PIXEL_CLK     => pll_outclk,
-    RESET         => reset,
+    RESET_50      => reset_50,
+    RESET_PIXEL   => reset_pixel,
     HDMI_I2C_SCL_I  => HDMI_I2C_SCL,
     HDMI_I2C_SDA_I  => HDMI_I2C_SDA,
     HDMI_I2C_SCL_OE => test_hdmi_i2c_scl_oe,

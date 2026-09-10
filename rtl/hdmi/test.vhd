@@ -6,7 +6,8 @@ entity hdmi_test is
   port(
     CLOCK        : in  std_logic;
     PIXEL_CLK    : in  std_logic;
-    RESET        : in  std_logic;
+    RESET_50     : in  std_logic;
+    RESET_PIXEL  : in  std_logic;
 
     HDMI_I2C_SCL_I  : in  std_logic;
     HDMI_I2C_SDA_I  : in  std_logic;
@@ -67,7 +68,7 @@ begin
   u_i2c : entity work.hdmi_i2c
   port map(
     CLOCK      => CLOCK,
-    RESET      => RESET,
+    RESET      => RESET_50,
     I2C_SCL_I  => HDMI_I2C_SCL_I,
     I2C_SDA_I  => HDMI_I2C_SDA_I,
     I2C_SCL_OE => HDMI_I2C_SCL_OE,
@@ -77,14 +78,14 @@ begin
   
   READY <= i2c_ready;
 
-  HDMI_ISEL <= not RESET;
+  HDMI_ISEL <= not RESET_50;
   HDMI_PD_n <= '1';
   
   HDMI_TX_CLK_p <= not PIXEL_CLK;
 
-  process(PIXEL_CLK, RESET)
+  process(PIXEL_CLK, RESET_PIXEL)
   begin
-    if RESET = '1' then
+    if RESET_PIXEL = '1' then
       h_count     <= 0;
       v_count     <= 0;
       pixel_x     <= (others => '0');
@@ -224,4 +225,3 @@ begin
   HDMI_TX_D  <= vga_r & vga_g & vga_b;
 
 end architecture rtl;
-
