@@ -430,4 +430,3 @@ set_global_assignment -name BOARD default
 set_global_assignment -name POWER_APPLY_THERMAL_MARGIN ADDITIONAL
 set_global_assignment -name IP_FILE ip/agilex_reset_release.ip
 set_global_assignment -name IP_FILE ip/pll.ip
-set_global_assignment -name QSYS_FILE computer.qsys

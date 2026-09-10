@@ -5,15 +5,32 @@ quartus/incremental_db/
 quartus/qdb/
 quartus/dni/
 quartus/tmp-clearbox
-quartus/ip/agilex_reset_release/
+quartus/cdb/
+quartus/greybox_tmp/
+quartus/hc_output/
+quartus/simulation/
+quartus/questa/
 
-# Quartus reports/session artifacts in project dir
+# Quartus and Platform Designer editor/session state
+quartus/.qsys_edit/
+quartus/*_assignment_defaults.qdf
+quartus/serv_req_info.txt
+quartus/*.qws
+
+# Generated IP and Platform Designer output
+quartus/ip/*/
+quartus/ip/*.ip.bak
+quartus/computer/
+
+# Quartus reports and generated metadata in the project directory
 quartus/*.rpt
 quartus/*.summary
 quartus/*.smsg
 quartus/*.done
 quartus/*.pin
-quartus/*.qws
+quartus/*.sld
+quartus/*.jdi
+quartus/*.bak
 
 # Programming outputs (if generated outside output_files)
 *.sof
@@ -29,3 +46,6 @@ transcript
 vsim.wlf
 modelsim.ini
 work/
+*.vcd
+*.fst
+*.ucdb

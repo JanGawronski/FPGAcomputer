@@ -7,7 +7,13 @@ Requirements:
  - Atum A3 Nano
  
 ### IP generation
-After fresh checkout and after every change of `.ip` files IP should generated.
+The project tracks only the portable IP descriptors:
+
+- `quartus/ip/pll.ip`
+- `quartus/ip/agilex_reset_release.ip`
+
+Generate IP files after a fresh checkout and after every change to an `.ip` file:
+
 ```bash
 quartus_ipgenerate --generate_project_ip_files --synthesis=vhdl quartus/computer
 ```
