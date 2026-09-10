@@ -6,24 +6,12 @@ Requirements:
  - Altera Quartus Prime Pro
  - Atum A3 Nano
  
-### IP generation
-The project tracks only the portable IP descriptors:
-
-- `quartus/ip/pll.ip`
-- `quartus/ip/agilex_reset_release.ip`
-
-Generate IP files after a fresh checkout and after every change to an `.ip` file:
-
-```bash
-quartus_ipgenerate --generate_project_ip_files --synthesis=vhdl quartus/computer
-```
-
-### Compilation
-```bash
+Compile:
+ ```bash
 quartus_sh --flow compile quartus/computer
  ```
 
-### Programming the board
+Program the board:
 ```bash
 quartus_pgm -m jtag -o "p;quartus/output_files/computer.sof"
 ```
