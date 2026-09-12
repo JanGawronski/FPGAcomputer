@@ -125,7 +125,13 @@ begin
           clear_addr <= clear_addr + 1;
         end if;
       elsif INPUT_CHAR /= x"00" then
-        if cursor_addr = TEXT_DEPTH - 1 then
+        if INPUT_CHAR = x"0D" then
+          if cursor_addr >= 66 * 240 then
+            cursor_addr <= 0;
+          else
+            cursor_addr <= ((cursor_addr / 240) + 1) * 240;
+          end if;
+        elsif cursor_addr = TEXT_DEPTH - 1 then
           cursor_addr <= 0;
         else
           cursor_addr <= cursor_addr + 1;

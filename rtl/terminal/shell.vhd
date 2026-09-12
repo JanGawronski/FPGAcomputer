@@ -33,10 +33,9 @@ begin
       DONE   <= '0';
     elsif rising_edge(CLOCK) then
       if ENABLE = '1' then
-        DONE <= '0';
         if INPUT_CHAR /= x"0" then
           if INPUT_CHAR = x"0D" then
-            DONE <= '1';
+            DONE <= '0';
           end if;
           OUTPUT_CHAR <= INPUT_CHAR;
           command_line(cursor) <= INPUT_CHAR;
