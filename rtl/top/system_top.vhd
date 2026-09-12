@@ -101,6 +101,7 @@ architecture rtl of system_top is
     std_logic_vector(to_unsigned(C_TRANSFER_END, C_RAM_ADDR_WIDTH));
 
   type t_owner is (
+    owner_hdmi_prepare,
     owner_terminal,
     owner_uart_load,
     owner_cpu,
@@ -109,7 +110,7 @@ architecture rtl of system_top is
     owner_done
     );
 
-  signal owner : t_owner := owner_terminal;
+  signal owner : t_owner := owner_hdmi_prepare;
 
   signal config_reset_request     : std_logic := '1';
   signal button_reset_request     : std_logic;
@@ -167,11 +168,6 @@ architecture rtl of system_top is
   signal pll_locked : std_logic := '0';
   signal pll_outclk : std_logic := '0';
 
-  
-  signal terminal_ready : std_logic := '0';
-
-  signal terminal_hdmi_i2c_scl  : std_logic := 'Z';
-  signal terminal_hdmi_i2c_sda  : std_logic := 'Z';
   signal terminal_hdmi_tx_hs    : std_logic := '0';
   signal terminal_hdmi_tx_vs    : std_logic := '0';
   signal terminal_hdmi_tx_d     : std_logic_vector(23 downto 0) := (others => '0');
@@ -190,12 +186,11 @@ architecture rtl of system_top is
   signal terminal_ram_rvalid  : std_logic;
   signal terminal_ram_rdata   : std_logic_vector(31 downto 0);
   signal terminal_fpga_uart_rx : std_logic;
-  
+  signal keyboard_char        : std_logic_vector(7 downto 0);
+  signal terminal_input_char  : std_logic_vector(7 downto 0);
   
   signal hdmi_ready         : std_logic := '0';
 
-  signal test_hdmi_i2c_scl  : std_logic := 'Z';
-  signal test_hdmi_i2c_sda  : std_logic := 'Z';
   signal test_hdmi_tx_hs    : std_logic := '0';
   signal test_hdmi_tx_vs    : std_logic := '0';
   signal test_hdmi_tx_d     : std_logic_vector(23 downto 0) := (others => '0');
@@ -203,16 +198,10 @@ architecture rtl of system_top is
   signal test_hdmi_tx_clk_p : std_logic := '0';
   signal test_hdmi_isel     : std_logic := '0';
   signal test_hdmi_pd_n     : std_logic := '0';
-  
-  signal terminal_hdmi_i2c_scl_oe : std_logic := '0';
-  signal terminal_hdmi_i2c_sda_oe : std_logic := '0';
-
-  signal test_hdmi_i2c_scl_oe : std_logic := '0';
-  signal test_hdmi_i2c_sda_oe : std_logic := '0';
 
   signal sel_hdmi_i2c_scl_oe : std_logic := '0';
   signal sel_hdmi_i2c_sda_oe : std_logic := '0';  
-  
+
 begin
   u_reset_release : component agilex_reset_release
     port map (
@@ -313,21 +302,23 @@ begin
   HDMI_ISEL <= terminal_hdmi_isel when owner = owner_terminal else test_hdmi_isel;
   HDMI_PD_n <= terminal_hdmi_pd_n when owner = owner_terminal else test_hdmi_pd_n;
 
-  sel_hdmi_i2c_scl_oe <= terminal_hdmi_i2c_scl_oe when owner = owner_terminal else test_hdmi_i2c_scl_oe;
-  sel_hdmi_i2c_sda_oe <= terminal_hdmi_i2c_sda_oe when owner = owner_terminal else test_hdmi_i2c_sda_oe;
-
   HDMI_I2C_SCL <= '0' when sel_hdmi_i2c_scl_oe = '1' else 'Z';
   HDMI_I2C_SDA <= '0' when sel_hdmi_i2c_sda_oe = '1' else 'Z';
 
   process (CLOCK0_50, reset_50)
   begin
     if reset_50 = '1' then
-      owner <= owner_terminal;
+      owner <= owner_hdmi_prepare;
     elsif rising_edge(CLOCK0_50) then
       case owner is
+        when owner_hdmi_prepare =>
+          if hdmi_ready = '1' then
+            owner <= owner_terminal;
+          end if;
+            
         when owner_terminal =>
           if terminal_done = '1' then
-            owner <= owner_uart_load;
+            owner <= owner_hdmi_example;
           end if;
             
         when owner_hdmi_example =>
@@ -460,6 +451,17 @@ begin
       outclk_0 => pll_outclk
       );
 
+  shell : entity work.shell
+    port map (
+      CLOCK       => CLOCK0_50,
+      RESET       => reset_50,
+      ENABLE      => terminal_enable,
+
+      INPUT_CHAR  => keyboard_char,
+      OUTPUT_CHAR => terminal_input_char,
+      
+      DONE        => terminal_done
+      );
 
   terminal : entity work.terminal
   port map (
@@ -468,11 +470,6 @@ begin
     RESET_50      => reset_50,
     RESET_PIXEL   => reset_pixel,
     ENABLE        => terminal_enable,         
-    FPGA_UART_RX  => terminal_fpga_uart_rx,
-    HDMI_I2C_SCL_I  => HDMI_I2C_SCL,
-    HDMI_I2C_SDA_I  => HDMI_I2C_SDA,
-    HDMI_I2C_SCL_OE => terminal_hdmi_i2c_scl_oe,
-    HDMI_I2C_SDA_OE => terminal_hdmi_i2c_sda_oe,
     HDMI_TX_HS    => terminal_hdmi_tx_hs,
     HDMI_TX_VS    => terminal_hdmi_tx_vs,
     HDMI_TX_D     => terminal_hdmi_tx_d,
@@ -480,19 +477,23 @@ begin
     HDMI_TX_CLK_p => terminal_hdmi_tx_clk_p,
     HDMI_ISEL     => terminal_hdmi_isel,
     HDMI_PD_n     => terminal_hdmi_pd_n,    
-    RAM_READY  => terminal_ram_ready,
-    RAM_RVALID => terminal_ram_rvalid,
-    RAM_RDATA  => terminal_ram_rdata,
-    RAM_VALID  => terminal_ram_valid,
-    RAM_WRITE  => terminal_ram_write,
-    RAM_ADDR   => terminal_ram_addr,
-    RAM_WDATA  => terminal_ram_wdata,
-    SD_CLK     => SD_CLK,
-    SD_DATA    => SD_DATA,
-    SD_CMD     => SD_CMD,
-    READY      => terminal_ready,
-    DONE       => terminal_done
+    INPUT_CHAR    => terminal_input_char
     );
+
+  keyboard : entity work.keyboard
+    generic map (
+      G_CLK_HZ         => 50_000_000,
+      G_BAUD           => 115200
+      )
+    port map (
+      CLOCK        => CLOCK0_50,
+      RESET        => reset_50,
+      ENABLE       => terminal_enable,
+
+      FPGA_UART_RX => terminal_fpga_uart_rx,
+
+      CHAR         => keyboard_char
+      );
   
   u_hdmi_test : entity work.hdmi_test
   port map (
@@ -500,19 +501,25 @@ begin
     PIXEL_CLK     => pll_outclk,
     RESET_50      => reset_50,
     RESET_PIXEL   => reset_pixel,
-    HDMI_I2C_SCL_I  => HDMI_I2C_SCL,
-    HDMI_I2C_SDA_I  => HDMI_I2C_SDA,
-    HDMI_I2C_SCL_OE => test_hdmi_i2c_scl_oe,
-    HDMI_I2C_SDA_OE => test_hdmi_i2c_sda_oe,
     HDMI_TX_HS    => test_hdmi_tx_hs,
     HDMI_TX_VS    => test_hdmi_tx_vs,
     HDMI_TX_D     => test_hdmi_tx_d,
     HDMI_TX_DE    => test_hdmi_tx_de,
     HDMI_TX_CLK_p => test_hdmi_tx_clk_p,
     HDMI_ISEL     => test_hdmi_isel,
-    HDMI_PD_n     => test_hdmi_pd_n,
-    READY         => hdmi_ready
+    HDMI_PD_n     => test_hdmi_pd_n
   );
+  
+  u_i2c : entity work.hdmi_i2c
+    port map (
+      CLOCK      => CLOCK0_50,
+      RESET      => RESET_50,
+      I2C_SCL_I  => HDMI_I2C_SCL,
+      I2C_SDA_I  => HDMI_I2C_SDA,
+      I2C_SCL_OE => sel_hdmi_i2c_scl_oe,
+      I2C_SDA_OE => sel_hdmi_i2c_sda_oe,
+      READY      => hdmi_ready
+      );
   
   DDC_I2C_SCL <= 'Z';
   DDC_I2C_SDA <= 'Z';

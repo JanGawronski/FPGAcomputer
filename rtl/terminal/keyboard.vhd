@@ -14,9 +14,7 @@ entity keyboard is
 
     FPGA_UART_RX : in  std_logic;
 
-    CHAR         : out std_logic_vector(7 downto 0);
-    DIFFERENTIAL : out std_logic
-    
+    CHAR         : out std_logic_vector(7 downto 0)
     );
 end entity keyboard;
 
@@ -31,12 +29,8 @@ architecture rtl of keyboard is
   signal clk_count        : natural range 0 to C_CLKS_PER_BIT - 1 := 0;
   signal bit_index        : natural range 0 to 7 := 0;
   signal data_byte        : std_logic_vector(7 downto 0) := (others => '0');
-  signal out_differential : std_logic;
   
 begin
-
-  CHAR <= data_byte;
-  DIFFERENTIAL <= out_differential;
 
  process (CLOCK)
   begin
@@ -54,16 +48,17 @@ begin
         data_byte    <= (others => '0');
         clk_count    <= 0;
         bit_index    <= 0;
-        out_differential <= '0';
+        CHAR         <= (others => '0');
       elsif ENABLE = '0' then
         state        <= idle;
         data_byte    <= (others => '0');
         clk_count    <= 0;
         bit_index    <= 0;
-        out_differential <= '0';
-       else
+        CHAR         <= (others => '0');
+      else
         case state is
           when idle =>
+            CHAR <= (others => '0');    
             if rx_sync = '0' then
               clk_count <= 0;
               state     <= start_bit;
@@ -100,12 +95,12 @@ begin
               clk_count <= 0;
               state <= idle;
               if rx_sync = '1' then
-                out_differential <= not out_differential;
+                CHAR <= data_byte;
               end if;
             else
               clk_count <= clk_count + 1;
             end if;
-            
+
         end case;
       end if;
     end if;

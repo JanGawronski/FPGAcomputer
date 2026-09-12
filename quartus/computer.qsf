@@ -17,6 +17,7 @@ set_global_assignment -name VHDL_FILE ../rtl/terminal/text_ram.vhd
 set_global_assignment -name VHDL_FILE ../rtl/terminal/font_rom.vhd
 set_global_assignment -name VHDL_FILE ../rtl/terminal/terminal.vhd
 set_global_assignment -name VHDL_FILE ../rtl/terminal/keyboard.vhd
+set_global_assignment -name VHDL_FILE ../rtl/terminal/shell.vhd
 set_global_assignment -name VHDL_FILE ../rtl/sdcard/sdcard.vhd
 set_global_assignment -name SDC_FILE computer.sdc
 

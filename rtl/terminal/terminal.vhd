@@ -9,13 +9,7 @@ entity terminal is
     RESET_50     : in  std_logic;
     RESET_PIXEL  : in  std_logic;
     ENABLE       : in  std_logic;
-    FPGA_UART_RX : in  std_logic;  
     
-    HDMI_I2C_SCL_I  : in  std_logic;
-    HDMI_I2C_SDA_I  : in  std_logic;
-    HDMI_I2C_SCL_OE : out std_logic;
-    HDMI_I2C_SDA_OE : out std_logic;
-
     HDMI_TX_HS    : out std_logic;
     HDMI_TX_VS    : out std_logic;
     HDMI_TX_D     : out std_logic_vector(23 downto 0);
@@ -25,20 +19,9 @@ entity terminal is
     HDMI_ISEL  : out std_logic;
     HDMI_PD_n  : out std_logic;
 
-    RAM_READY  : in  std_logic;
-    RAM_RVALID : in  std_logic;
-    RAM_RDATA  : in  std_logic_vector(31 downto 0);
-    RAM_VALID  : out std_logic;
-    RAM_WRITE  : out std_logic;
-    RAM_ADDR   : out std_logic_vector(24 - 1 downto 0);
-    RAM_WDATA  : out std_logic_vector(31 downto 0);
-
-    SD_CLK     : out    std_logic;
-    SD_DATA    : inout  std_logic_vector(3 downto 0);
-    SD_CMD     : inout  std_logic;
+    INPUT_CHAR : in std_logic_vector(7 downto 0);
     
-    READY : out std_logic;
-    DONE  : out std_logic
+    READY : out std_logic
     );
 end entity terminal;
 
@@ -58,13 +41,11 @@ architecture rtl of terminal is
   constant V_END     : natural := 1120;
   constant V_VISIBLE : natural := 1080;
 
-  constant LINE_WIDTH       : positive := H_VISIBLE / FONT_WIDTH;
-  constant LINE_COUNT       : positive := V_VISIBLE / FONT_HEIGHT;
-  constant TEXT_DEPTH       : positive := LINE_WIDTH * LINE_COUNT;
-  constant TEXT_ADDR_WIDTH  : positive := 14;
+  constant LINE_WIDTH        : positive := H_VISIBLE / FONT_WIDTH;
+  constant LINE_COUNT        : positive := V_VISIBLE / FONT_HEIGHT;
+  constant TEXT_DEPTH        : positive := LINE_WIDTH * LINE_COUNT;
+  constant TEXT_ADDR_WIDTH   : positive := 14;
   constant TEXT_PIXEL_HEIGHT : positive := LINE_COUNT * FONT_HEIGHT;
-
-  signal i2c_ready : std_logic := '0';
 
   signal h_count : natural range 0 to H_TOTAL := 0;
   signal v_count : natural range 0 to V_TOTAL := 0;
@@ -101,97 +82,14 @@ architecture rtl of terminal is
   signal clear_addr   : natural range 0 to TEXT_DEPTH - 1 := 0;
   signal cursor_addr  : natural range 0 to TEXT_DEPTH - 1 := 0;
 
-  signal char                 : std_logic_vector(7 downto 0) := (others => '0');
-  signal differential         : std_logic := '0';
-  signal last_differential_50 : std_logic := '0';
-  signal keyboard_enable      : std_logic := '0';
-
   signal enable_meta  : std_logic := '0';
   signal enable_pixel : std_logic := '0';
   signal clear_meta   : std_logic := '1';
   signal clear_pixel  : std_logic := '1';
 
-  signal sd_start_rd : std_logic;
-  signal sd_start_wr : std_logic; 
-  signal sd_lba      : unsigned(31 downto 0);
-  signal sd_busy     : std_logic;
-  signal sd_done     : std_logic;
-  signal sd_error    : std_logic;
-  signal sd_addr     : unsigned(8 downto 0);
-  signal sd_din      : std_logic_vector(7 downto 0);
-  signal sd_dout     : std_logic_vector(7 downto 0);
-  signal sd_we       : std_logic;
-  signal sd_dat0     : std_logic;
-  signal sd_dat3     : std_logic;
-
 begin
-  keyboard_enable <= ENABLE and not clear_active;
 
-  keyboard : entity work.keyboard
-    generic map (
-      G_CLK_HZ         => 50_000_000,
-      G_BAUD           => 115200
-      )
-    port map (
-      CLOCK        => CLOCK,
-      RESET        => RESET_50,
-      ENABLE       => keyboard_enable,
-
-      FPGA_UART_RX => FPGA_UART_RX,
-
-      CHAR         => char,
-      DIFFERENTIAL => differential
-      );
-
-  u_i2c : entity work.hdmi_i2c
-    port map (
-      CLOCK      => CLOCK,
-      RESET      => RESET_50,
-      I2C_SCL_I  => HDMI_I2C_SCL_I,
-      I2C_SDA_I  => HDMI_I2C_SDA_I,
-      I2C_SCL_OE => HDMI_I2C_SCL_OE,
-      I2C_SDA_OE => HDMI_I2C_SDA_OE,
-      READY      => i2c_ready
-      );
-
-  sdcard : entity work.sdcard
-    port map (
-      clk      => CLOCK,
-      rst      => RESET_50,
-      start_rd => sd_start_rd,
-      start_wr => sd_start_wr,
-      lba      => sd_lba,
-      busy     => sd_busy,
-      done     => sd_done,
-      error    => sd_error,
-      sd_clk   => SD_CLK,
-      sd_cmd   => SD_CMD,
-      sd_dat0  => sd_dat0,
-      sd_dat3  => sd_dat3,
-      
-      ram_addr => sd_addr,
-      ram_din  => sd_din,
-      ram_dout => sd_dout,
-      ram_we   => sd_we
-      );
-
-  sd_start_rd <= '0';
-  sd_start_wr <= '0';
-  sd_lba      <= (others => '0');
-  sd_dout     <= (others => '0');
-
-  sd_dat0 <= SD_DATA(0);
-  SD_DATA(0) <= 'Z';
-  SD_DATA(1) <= 'Z';
-  SD_DATA(2) <= 'Z';
-  SD_DATA(3) <= sd_dat3;
-
-  RAM_VALID <= '0';
-  RAM_WRITE <= '0';
-  RAM_ADDR  <= (others => '0');
-  RAM_WDATA <= (others => '0');
-
-  READY <= i2c_ready and not clear_active;
+  READY <= not clear_active;
 
   HDMI_ISEL <= not RESET_50;
   HDMI_PD_n <= '1';
@@ -199,14 +97,14 @@ begin
 
   text_wr_en <= '1'
     when RESET_50 = '0' and ENABLE = '1' and
-      (clear_active = '1' or differential /= last_differential_50)
+      (clear_active = '1' or INPUT_CHAR /= x"00")
     else '0';
 
   text_wr_addr <= to_unsigned(clear_addr, text_wr_addr'length)
     when clear_active = '1'
     else to_unsigned(cursor_addr, text_wr_addr'length);
 
-  text_wr_data <= (others => '0') when clear_active = '1' else char;
+  text_wr_data <= (others => '0') when clear_active = '1' else INPUT_CHAR;
 
   process (CLOCK, RESET_50)
   begin
@@ -214,32 +112,19 @@ begin
       clear_active         <= '1';
       clear_addr           <= 0;
       cursor_addr          <= 0;
-      last_differential_50 <= '0';
-      DONE                 <= '0';
     elsif rising_edge(CLOCK) then
       if ENABLE = '0' then
         clear_active         <= '1';
         clear_addr           <= 0;
         cursor_addr          <= 0;
-        last_differential_50 <= differential;
-        DONE                 <= '0';
       elsif clear_active = '1' then
-        last_differential_50 <= differential;
-        DONE                 <= '0';
-
         if clear_addr = TEXT_DEPTH - 1 then
           clear_active <= '0';
           clear_addr   <= 0;
         else
           clear_addr <= clear_addr + 1;
         end if;
-      elsif differential /= last_differential_50 then
-        last_differential_50 <= differential;
-
-        if char = x"71" then
-          DONE <= '1';
-        end if;
-
+      elsif INPUT_CHAR /= x"00" then
         if cursor_addr = TEXT_DEPTH - 1 then
           cursor_addr <= 0;
         else

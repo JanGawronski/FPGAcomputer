@@ -9,11 +9,6 @@ entity hdmi_test is
     RESET_50     : in  std_logic;
     RESET_PIXEL  : in  std_logic;
 
-    HDMI_I2C_SCL_I  : in  std_logic;
-    HDMI_I2C_SDA_I  : in  std_logic;
-    HDMI_I2C_SCL_OE : out std_logic;
-    HDMI_I2C_SDA_OE : out std_logic;
-
     HDMI_TX_HS    : out std_logic;
     HDMI_TX_VS    : out std_logic;
     HDMI_TX_D     : out std_logic_vector(23 downto 0);
@@ -21,15 +16,11 @@ entity hdmi_test is
     HDMI_TX_CLK_p : out std_logic;
 
     HDMI_ISEL  : out std_logic;
-    HDMI_PD_n  : out std_logic;
-
-    READY : out std_logic
+    HDMI_PD_n  : out std_logic
   );
 end entity hdmi_test;
 
 architecture rtl of hdmi_test is
-  signal i2c_ready : std_logic := '0';
-
   constant H_TOTAL : integer := 2199;
   constant H_SYNC  : integer := 43;
   constant H_START : integer := 189;
@@ -65,19 +56,6 @@ architecture rtl of hdmi_test is
   signal vga_b  : std_logic_vector(7 downto 0) := (others => '0');
 
 begin
-  u_i2c : entity work.hdmi_i2c
-  port map(
-    CLOCK      => CLOCK,
-    RESET      => RESET_50,
-    I2C_SCL_I  => HDMI_I2C_SCL_I,
-    I2C_SDA_I  => HDMI_I2C_SDA_I,
-    I2C_SCL_OE => HDMI_I2C_SCL_OE,
-    I2C_SDA_OE => HDMI_I2C_SDA_OE,
-    READY      => i2c_ready
-  );
-  
-  READY <= i2c_ready;
-
   HDMI_ISEL <= not RESET_50;
   HDMI_PD_n <= '1';
   
