@@ -152,7 +152,7 @@ architecture rtl of system_top is
   signal send_ram_be     : std_logic_vector((C_RAM_DATA_WIDTH / 8) - 1 downto 0);
   signal send_ram_rvalid : std_logic;
   signal send_ram_rdata  : std_logic_vector(C_RAM_DATA_WIDTH - 1 downto 0);
-  signal uart_tx_out     : std_logic;
+  signal load_fpga_uart_tx : std_logic;
 
   -- Shared RAM fabric
   signal ram_valid_mux : std_logic;
@@ -186,6 +186,7 @@ architecture rtl of system_top is
   signal terminal_ram_rvalid  : std_logic;
   signal terminal_ram_rdata   : std_logic_vector(31 downto 0);
   signal terminal_fpga_uart_rx : std_logic;
+  signal terminal_fpga_uart_tx : std_logic;       
   signal keyboard_char        : std_logic_vector(7 downto 0);
   signal terminal_input_char  : std_logic_vector(7 downto 0);
   
@@ -273,11 +274,12 @@ begin
   send_ram_rdata  <= ram_rdata when owner = owner_uart_send else (others => '0');
 
   terminal_ram_rvalid <= ram_rvalid when owner = owner_terminal else '0';
-  terminal_ram_rdata <= ram_rdata when owner = owner_terminal else (others => '0');
+  terminal_ram_rdata  <= ram_rdata when owner = owner_terminal else (others => '0');
   
   terminal_fpga_uart_rx <= FPGA_UART_RX when owner = owner_terminal else '0';
   load_fpga_uart_rx     <= FPGA_UART_RX when owner = owner_uart_load else '0';
 
+  FPGA_UART_TX <= terminal_fpga_uart_tx when owner = owner_terminal else load_fpga_uart_tx;
   
   HDMI_TX_HS <= '0' when reset_pixel = '1' else
                 terminal_hdmi_tx_hs when owner = owner_terminal else
@@ -419,7 +421,7 @@ begin
       CLOCK        => CLOCK0_50,
       RESET        => reset_50,
       ENABLE       => send_enable,
-      FPGA_UART_TX => uart_tx_out,
+      FPGA_UART_TX => load_fpga_uart_tx,
       RAM_START    => C_TRANSFER_START_VEC,
       RAM_END      => C_TRANSFER_END_VEC,
       RAM_READY    => send_ram_ready,
@@ -432,8 +434,6 @@ begin
       RAM_BYTE_EN  => send_ram_be,
       DONE         => send_done
       );
-
-  FPGA_UART_TX <= uart_tx_out;
 
   led_status(0) <= '1' when owner = owner_uart_load  else '0';
   led_status(1) <= '1' when owner = owner_cpu else '0';
@@ -519,6 +519,21 @@ begin
       I2C_SCL_OE => sel_hdmi_i2c_scl_oe,
       I2C_SDA_OE => sel_hdmi_i2c_sda_oe,
       READY      => hdmi_ready
+      );
+
+  uart_terminal : entity work.uart_terminal
+    generic map (
+      G_CLK_HZ         => 50_000_000,
+      G_BAUD           => 115200
+      )
+    port map (
+      CLOCK        => CLOCK0_50,
+      RESET        => reset_50,
+      ENABLE       => terminal_enable,
+
+      FPGA_UART_TX => terminal_fpga_uart_tx,
+
+      CHAR         => keyboard_char
       );
   
   DDC_I2C_SCL <= 'Z';
