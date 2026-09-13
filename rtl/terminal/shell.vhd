@@ -27,7 +27,7 @@ architecture rtl of shell is
 
   constant NOT_FOUND_LENGTH : natural := 11;
   
-  signal write_counter : natural range 0 to NOT_FOUND_LENGTH + LINE_WIDTH - 1 := 0;
+  signal write_counter : natural range 0 to NOT_FOUND_LENGTH + LINE_WIDTH := 0;
   
   type byte_array_t is array (0 to NOT_FOUND_LENGTH - 1) of std_logic_vector(7 downto 0);
   constant NOT_FOUND : byte_array_t := (x"4E", x"6F", x"74", x"20", x"66", x"6F", x"75", x"6E", x"64", x"3A", x"20");
@@ -58,8 +58,6 @@ begin
                 if cursor > 0 then
                   reading <= '0';
                   write_counter <= 0;
-                else
-                  OUTPUT_CHAR <= x"0D";
                 end if;
               end if;
             else
@@ -68,8 +66,7 @@ begin
               cursor <= cursor + 1;            
             end if;  
           else
-            OUTPUT_CHAR  <= (others => '0');
-            
+            OUTPUT_CHAR <= (others => '0');
           end if;
         else
           if write_counter < NOT_FOUND_LENGTH then
@@ -82,7 +79,7 @@ begin
             OUTPUT_CHAR <= x"0D"; -- Enter
             write_counter <= 0;
             reading <= '1';
-            cursor <= 0;      
+            cursor <= 0;
             command_line <= (others => (others => '0'));
           end if;
         end if;

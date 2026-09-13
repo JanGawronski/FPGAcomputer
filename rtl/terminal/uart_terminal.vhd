@@ -20,7 +20,17 @@ end entity uart_terminal;
 
 architecture rtl of uart_terminal is
     constant C_CLKS_PER_BIT : natural := G_CLK_HZ / G_BAUD;
+    constant BUFFER_SIZE    : natural := 1000;
+    
+    type t_ram is array (0 to BUFFER_SIZE - 1) of std_logic_vector(7 downto 0);
+    signal mem : t_ram;
 
+    attribute ramstyle : string;
+    attribute ramstyle of mem : signal is "M20K";
+
+    signal reading_pointer : natural range 0 to BUFFER_SIZE - 1 := 0;
+    signal writing_pointer : natural range 0 to BUFFER_SIZE - 1 := 0;
+    
     type t_state is (
         idle,
         tx_start,
@@ -36,21 +46,27 @@ begin
     process (CLOCK, RESET)
     begin
         if RESET = '1' then
-          state         <= idle;
-          tx_byte       <= (others => '0');
-          tx_bit_index  <= 0;
-          clk_count     <= 0;
+          state           <= idle;
+          tx_byte         <= (others => '0');
+          tx_bit_index    <= 0;
+          clk_count       <= 0;
+          reading_pointer <= 0;
+          writing_pointer <= 0;
       elsif rising_edge(CLOCK) then
         if ENABLE = '0' then
           state         <= idle;
           tx_byte       <= (others => '0');
           tx_bit_index  <= 0;
           clk_count     <= 0;
-        else          
+        else
+          if CHAR /= x"00" then
+            mem(writing_pointer) <= CHAR;
+            writing_pointer      <= writing_pointer + 1;
+          end if;
           case state is
             when idle =>
-              if CHAR /= x"00" then
-                tx_byte      <= CHAR;
+              if writing_pointer /= reading_pointer then
+                tx_byte      <= mem(reading_pointer);
                 tx_bit_index <= 0;
                 clk_count    <= 0;              
                 state        <= tx_start;
@@ -81,8 +97,9 @@ begin
             when tx_stop =>
               FPGA_UART_TX <= '1';
               if clk_count = C_CLKS_PER_BIT - 1 then
-                clk_count <= 0;
-                state     <= idle;
+                clk_count       <= 0;
+                state           <= idle;
+                reading_pointer <= reading_pointer + 1;
               else
                 clk_count <= clk_count + 1;
               end if;

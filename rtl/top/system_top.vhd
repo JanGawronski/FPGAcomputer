@@ -533,7 +533,7 @@ begin
 
       FPGA_UART_TX => terminal_fpga_uart_tx,
 
-      CHAR         => keyboard_char
+      CHAR         => terminal_input_char
       );
   
   DDC_I2C_SCL <= 'Z';
