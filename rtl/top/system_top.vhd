@@ -88,12 +88,12 @@ architecture rtl of system_top is
   constant C_RAM_DATA_WIDTH : positive := 32;
   constant C_RAM_WORD_COUNT : positive := 512;
 
-  constant C_CLK_HZ : positive := 50_000_000;
+  constant C_CLOCK_HZ : positive := 50_000_000;
 
   constant C_I2C_HZ : positive := 400_000;
   constant C_I2C_STARTUP_DELAY_MS : positive := 500;
   
-  constant C_BAUD   : positive := 115200;
+  constant C_UART_BAUD : positive := 115200;
 
   constant C_TRANSFER_START : natural := 0;
   constant C_TRANSFER_END   : natural := 255;
@@ -375,8 +375,8 @@ begin
     generic map (
       G_RAM_ADDR_WIDTH => C_RAM_ADDR_WIDTH,
       G_RAM_DATA_WIDTH => C_RAM_DATA_WIDTH,
-      G_CLK_HZ         => C_CLK_HZ,
-      G_BAUD           => C_BAUD
+      G_CLK_HZ         => C_CLOCK_HZ,
+      G_BAUD           => C_UART_BAUD
       )
     port map (
       CLOCK        => CLOCK0_50,
@@ -419,8 +419,8 @@ begin
     generic map (
       G_RAM_ADDR_WIDTH => C_RAM_ADDR_WIDTH,
       G_RAM_DATA_WIDTH => C_RAM_DATA_WIDTH,
-      G_CLK_HZ         => C_CLK_HZ,
-      G_BAUD           => C_BAUD
+      G_CLK_HZ         => C_CLOCK_HZ,
+      G_BAUD           => C_UART_BAUD
       )
     port map (
       CLOCK        => CLOCK0_50,
@@ -487,8 +487,8 @@ begin
 
   keyboard : entity work.keyboard
     generic map (
-      G_CLK_HZ         => 50_000_000,
-      G_BAUD           => 115200
+      G_CLK_HZ         => C_CLOCK_HZ,
+      G_BAUD           => C_UART_BAUD
       )
     port map (
       CLOCK        => CLOCK0_50,
@@ -517,7 +517,7 @@ begin
   
   u_i2c : entity work.hdmi_i2c
     generic map (
-      G_CLOCK_HZ => C_CLK_HZ,
+      G_CLOCK_HZ => C_CLOCK_HZ,
       G_I2C_HZ   => C_I2C_HZ,
       G_STARTUP_DELAY_MS => C_I2C_STARTUP_DELAY_MS
       )
@@ -534,8 +534,8 @@ begin
 
   uart_terminal : entity work.uart_terminal
     generic map (
-      G_CLK_HZ         => 50_000_000,
-      G_BAUD           => 115200
+      G_CLK_HZ     => C_CLOCK_HZ,
+      G_BAUD       => C_UART_BAUD
       )
     port map (
       CLOCK        => CLOCK0_50,
