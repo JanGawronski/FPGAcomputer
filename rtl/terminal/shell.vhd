@@ -52,13 +52,15 @@ begin
       command_counter <= 0;
       DONE   <= '0';
     elsif rising_edge(CLOCK) then
-      if ENABLE = '1' then
+      if ENABLE = '0' then
+        OUTPUT_CHAR <= (others => '0');
+      else
         case state is
           when reading =>
             if INPUT_CHAR /= x"00" then
               OUTPUT_CHAR <= INPUT_CHAR;
               if INPUT_CHAR = x"0D" then -- INPUT_CHAR = Enter
-                if command_line(0 to 3) = (x"65", x"78", x"69", x"74") then -- exit
+                if command_line(0 to 3) = (x"65", x"78", x"69", x"74") and cursor = 4 then -- exit
                   DONE <= '1';
                   cursor <= 0;
                   command_line <= (others => (others => '0'));
@@ -91,7 +93,7 @@ begin
             end if;
           when printing_command =>
             OUTPUT_CHAR <= command_line(command_counter);
-            if command_counter = cursor then
+            if command_counter = cursor - 1 then
               command_counter <= 0;
               state <= finishing_printing;
             else
