@@ -4,8 +4,8 @@ use ieee.numeric_std.all;
 
 entity uart_terminal is
     generic (
-        G_CLK_HZ         : positive;
-        G_BAUD           : positive
+        G_CLK_HZ     : positive;
+        G_BAUD       : positive
     );
     port (
         CLOCK        : in  std_logic;
@@ -52,16 +52,22 @@ begin
           clk_count       <= 0;
           reading_pointer <= 0;
           writing_pointer <= 0;
-      elsif rising_edge(CLOCK) then
+          FPGA_UART_TX    <= '1';
+        elsif rising_edge(CLOCK) then
         if ENABLE = '0' then
           state         <= idle;
           tx_byte       <= (others => '0');
           tx_bit_index  <= 0;
           clk_count     <= 0;
+          FPGA_UART_TX  <= '1';
         else
           if CHAR /= x"00" then
             mem(writing_pointer) <= CHAR;
-            writing_pointer      <= writing_pointer + 1;
+            if writing_pointer = BUFFER_SIZE - 1 then
+              writing_pointer <= 0;
+            else
+              writing_pointer <= writing_pointer + 1;
+            end if;
           end if;
           case state is
             when idle =>
@@ -99,7 +105,11 @@ begin
               if clk_count = C_CLKS_PER_BIT - 1 then
                 clk_count       <= 0;
                 state           <= idle;
-                reading_pointer <= reading_pointer + 1;
+                if reading_pointer = BUFFER_SIZE - 1 then
+                  reading_pointer <= 0;
+                else
+                  reading_pointer <= reading_pointer + 1;
+                end if;
               else
                 clk_count <= clk_count + 1;
               end if;
