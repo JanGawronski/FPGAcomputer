@@ -89,6 +89,10 @@ architecture rtl of system_top is
   constant C_RAM_WORD_COUNT : positive := 512;
 
   constant C_CLK_HZ : positive := 50_000_000;
+
+  constant C_I2C_HZ : positive := 400_000;
+  constant C_I2C_STARTUP_DELAY_MS : positive := 500;
+  
   constant C_BAUD   : positive := 115200;
 
   constant C_TRANSFER_START : natural := 0;
@@ -191,6 +195,7 @@ architecture rtl of system_top is
   signal terminal_input_char  : std_logic_vector(7 downto 0);
   
   signal hdmi_ready         : std_logic := '0';
+  signal hdmi_error         : std_logic := '0';
 
   signal test_hdmi_tx_hs    : std_logic := '0';
   signal test_hdmi_tx_vs    : std_logic := '0';
@@ -435,8 +440,8 @@ begin
       DONE         => send_done
       );
 
-  led_status(0) <= '1' when owner = owner_uart_load  else '0';
-  led_status(1) <= '1' when owner = owner_cpu else '0';
+  led_status(0) <= hdmi_error;
+  led_status(1) <= hdmi_ready;
   led_status(2) <= '1' when owner = owner_terminal else '0';
   led_status(3) <= '1' when owner = owner_hdmi_example else '0';
   LED <= not led_status;
@@ -511,6 +516,11 @@ begin
   );
   
   u_i2c : entity work.hdmi_i2c
+    generic map (
+      G_CLOCK_HZ => C_CLK_HZ,
+      G_I2C_HZ   => C_I2C_HZ,
+      G_STARTUP_DELAY_MS => C_I2C_STARTUP_DELAY_MS
+      )
     port map (
       CLOCK      => CLOCK0_50,
       RESET      => RESET_50,
@@ -518,7 +528,8 @@ begin
       I2C_SDA_I  => HDMI_I2C_SDA,
       I2C_SCL_OE => sel_hdmi_i2c_scl_oe,
       I2C_SDA_OE => sel_hdmi_i2c_sda_oe,
-      READY      => hdmi_ready
+      READY      => hdmi_ready,
+      ERROR      => hdmi_error
       );
 
   uart_terminal : entity work.uart_terminal
