@@ -13,6 +13,14 @@ derive_clock_uncertainty
 set_false_path -from [get_clocks {CLOCK0_50}] -to [get_registers {*|enable_meta}]
 set_false_path -from [get_clocks {CLOCK0_50}] -to [get_registers {*|clear_meta}]
 
+# UART RX is asynchronous to CLOCK0_50. Only the paths into the first
+# synchronizer stages are exempt; rx_meta to rx_sync remains timed.
+set_false_path -from [get_ports {FPGA_UART_RX}] -to [get_registers {keyboard|rx_meta}]
+set_false_path -from [get_ports {FPGA_UART_RX}] -to [get_registers {u_uart_loader|rx_meta}]
+
+# KEY[0] is used only as an asynchronous reset request.
+set_false_path -from [get_ports {KEY[0]}]
+
 # Reset synchronizers assert asynchronously but release through clocked stages.
 # Exempt only their asynchronous control pins; stage-to-stage paths stay timed.
 foreach reset_sync_instance {u_reset_50 u_reset_pixel} {

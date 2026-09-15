@@ -35,6 +35,19 @@ set_instance_assignment -name PRESERVE_REGISTER ON -to "terminal|clear_meta"
 set_instance_assignment -name DONT_MERGE_REGISTER ON -to "terminal|clear_pixel"
 set_instance_assignment -name PRESERVE_REGISTER ON -to "terminal|clear_pixel"
 
+# UART input synchronizer chains
+set_instance_assignment -name SYNCHRONIZER_IDENTIFICATION FORCED -to "keyboard|rx_meta"
+set_instance_assignment -name DONT_MERGE_REGISTER ON -to "keyboard|rx_meta"
+set_instance_assignment -name PRESERVE_REGISTER ON -to "keyboard|rx_meta"
+set_instance_assignment -name DONT_MERGE_REGISTER ON -to "keyboard|rx_sync"
+set_instance_assignment -name PRESERVE_REGISTER ON -to "keyboard|rx_sync"
+
+set_instance_assignment -name SYNCHRONIZER_IDENTIFICATION FORCED -to "u_uart_loader|rx_meta"
+set_instance_assignment -name DONT_MERGE_REGISTER ON -to "u_uart_loader|rx_meta"
+set_instance_assignment -name PRESERVE_REGISTER ON -to "u_uart_loader|rx_meta"
+set_instance_assignment -name DONT_MERGE_REGISTER ON -to "u_uart_loader|rx_sync"
+set_instance_assignment -name PRESERVE_REGISTER ON -to "u_uart_loader|rx_sync"
+
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 100
 set_global_assignment -name DEVICE A3CZ135BB18AE7S
